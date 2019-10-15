@@ -21,12 +21,6 @@
 #FUSES NODEBUG
 #use delay(clock=4000000, restart_wdt)
 
-/* 
-Parameters are stored in EEPROM
-*/
-#define PARAM_CRC_ADDRESS  0x002
-#define PARAM_ADDRESS      PARAM_CRC_ADDRESS+2
-
 
 /* UART1 - connection to two TriStar charge controllers */
 #use rs232(UART1,stream=STREAM_TRISTAR,baud=9600,xmit=PIN_C6,rcv=PIN_C7,errors)	
@@ -42,28 +36,14 @@ Parameters are stored in EEPROM
 #byte INTCON2=GETENV("SFR:intcon2")
 #bit RBPU=INTCON2.7
 
-/* UART2 - RS-485 MODBUS network */
-#use rs232(UART2, stream=MODBUS_SERIAL, baud=9600,errors)	
-
-
-
-
 #use standard_io(A)
 #use standard_io(B)
 #use standard_io(C)
 #use standard_io(E)
 
-#define CYCLES_BEFORE_CONTACTOR_RESET 100
-
-#define RS485_DE                 PIN_A4
-#define RS232_TX_EN              PIN_A7
-#define RS232_RX_NEN             PIN_A6
-#define LED_A                    PIN_C0
-#define LED_B                    PIN_C1
-#define BRIDGE_B                 PIN_C2
-#define BRIDGE_A                 PIN_C3
-#define LED_C                    PIN_C4
-#define LED_D                    PIN_C5
+#define RS232_EN                 PIN_A7
+#define LED_RED                  PIN_C0
+#define LED_GREEN                PIN_C1
 #define SER_TO_TS                PIN_C6
 #define SER_FROM_TS              PIN_C7
 
@@ -77,12 +57,7 @@ Parameters are stored in EEPROM
 
 
 /* analog inputs ADC channels*/
-#define AN_CH_T4	10	// RB1 / AN10 (on board NTC)
-#define AN_CH_T3	0	// RA0 / AN0
-#define AN_CH_T2	1	// RA1 / AN1
-#define AN_CH_T1	2	// RA2 / AN2
-#define AN_CH_T0	3	// RA3 / AN3
-#define AN_IN_VOLTS	4	// RA5 / AN4  (on board 1:6 divider)
+#define AN_CH_T0	0	// RA0 / AN0 (on board NTC)
 
 
 typedef union {
