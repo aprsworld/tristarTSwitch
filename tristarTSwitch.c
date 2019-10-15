@@ -115,6 +115,8 @@ void init() {
 	setup_dac(DAC_OFF);
 	setup_vref(VREF_OFF);
 	setup_spi(SPI_DISABLED);
+
+	setup_wdt(WDT_ON);
 }
 
 void print_restart_cause(int8 val) {
@@ -165,9 +167,9 @@ void main(void) {
 	/* setup hardware */
 	init();
 
-	/* flash the number of times of our switch value */
+	/* flash the number of times + 1 of our switch value */
 	current.rotary_switch_value=read_rotary_switch();
-	for ( i=0 ; i<current.rotary_switch_value ; i++ ) {
+	for ( i=0 ; i<=current.rotary_switch_value ; i++ ) {
 		/* orange means Tristar not yet set */
 		output_high(LED_GREEN);
 		output_high(LED_RED);
@@ -181,7 +183,49 @@ void main(void) {
 	/* load  hard coded settings */
 	set_config();
 
+	for ( ; ; ) {
+		/* WDT should wake up from sleep and get here within a few instructions */
+		current.restart_cause = restart_cause();
 
+		/* orange means Tristar not yet set */
+		output_high(LED_GREEN);
+		output_high(LED_RED);
+
+		delay_ms(500);
+
+
+		/* setup ADC and read input voltage */
+		setup_adc(ADC_CLOCK_DIV_8); 
+		setup_adc_ports(sAN0, VSS_VDD);
+		ADFM=1; /* right justify ADC results */
+
+		/* read rotary switch and lookup temperature set point */
+		current.rotary_switch_value=read_rotary_switch();
+		tSet=config.t_setpoints[current.rotary_switch_value];
+
+		/* read temperatures */
+		adc=read_adc_average16(0);
+
+		if ( adc<tSet ) {
+			/* temperature above set point */
+			modbus_tristar_disable(); 
+		} else {
+			/* temperature below set point */
+			modbus_tristar_enable(); 
+		}
+
+		/* shut off ADC before going to sleep to save power */
+		setup_adc(ADC_OFF);
+
+		/* sleep restarts the watchdog so we should get a relative consistent wakeup */
+		sleep();
+		/* instruction is pre-fetched prior to sleep ... so run a NOP as first new instruction */
+		delay_cycles(1);
+	}
+}
+
+
+#if 0
 #ifdef RS232_DEBUG	
 	/* turn on RS-232 port */
 	output_high(RS232_EN);
@@ -191,15 +235,6 @@ void main(void) {
 	fprintf(STREAM_TRISTAR,"# boot restart_cause()=%u ",bootRestartCause);
 	print_restart_cause(bootRestartCause);
 #endif
-
-	for ( ; ; ) {
-		/* WDT should wake up from sleep and get here within a few instructions */
-		current.restart_cause = restart_cause();
-
-		/* orange means Tristar not yet set */
-		output_high(LED_GREEN);
-		output_high(LED_RED);
-
 
 #ifdef RS232_DEBUG	
 		/* turn on RS-232 port */
@@ -216,33 +251,15 @@ void main(void) {
 		fprintf(STREAM_TRISTAR,"# config.v_contactor_off_below=%lu\r\n",config.v_contactor_off_below);
 #endif
 
-		/* setup ADC and read input voltage */
-		setup_adc(ADC_CLOCK_DIV_8); 
-		setup_adc_ports(sAN0, VSS_VDD);
-		ADFM=1; /* right justify ADC results */
-
-		/* read rotary switch and lookup temperature set point */
-		current.rotary_switch_value=read_rotary_switch();
-		tSet=config.t_setpoints[current.rotary_switch_value];
-
 #ifdef RS232_DEBUG	
 			fprintf(STREAM_TRISTAR,"# rotarySwitchValue=%u tSet=%lu\r\n",current.rotary_switch_value,tSet);
 #endif
 
-		/* read temperatures */
-		adc=read_adc_average16(0);
+
 
 #ifdef RS232_DEBUG	
 			fprintf(STREAM_TRISTAR,"# [0]=%lu\r\n",adc);
 #endif
-
-		if ( adc<tSet ) {
-			/* temperature above set point */
-			modbus_tristar_disable(); 
-		} else {
-			/* temperature below set point */
-			modbus_tristar_enable(); 
-		}
 
 #ifdef RS232_DEBUG	
 		delay_ms(10);
@@ -250,12 +267,5 @@ void main(void) {
 		output_low(RS232_EN);
 #endif
 
-		/* shut off ADC before going to sleep to save power */
-		setup_adc(ADC_OFF);
 
-		/* sleep restarts the watchdog so we should get a relative consistent wakeup */
-		sleep();
-		/* instruction is pre-fetched prior to sleep ... so run a NOP as first new instruction */
-		delay_cycles(1);
-	}
-}
+#endif
