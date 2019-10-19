@@ -11,8 +11,7 @@
 #FUSES BORV29
 #FUSES NOMCLR
 #FUSES NOWDT
-//#FUSES WDT // does not appear to be working
-//#FUSES WDT_SW
+#FUSES WDT 
 #FUSES WDT512 // 512 = 10 seconds
 //#FUSES WDT1024 // 1024 = 18 seconds
 //#FUSES WDT2048 // 2048 = 32 seconds

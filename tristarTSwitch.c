@@ -167,6 +167,19 @@ void main(void) {
 	/* setup hardware */
 	init();
 
+#ifdef RS232_DEBUG	
+	/* turn on RS-232 port */
+	output_high(RS232_EN);
+	delay_ms(10);
+	fprintf(STREAM_TRISTAR,"\r\n\r\n# tristarTSwitch.c cold boot %s\r\n",__DATE__);
+
+	fprintf(STREAM_TRISTAR,"# boot restart_cause()=%u ",bootRestartCause);
+	print_restart_cause(bootRestartCause);
+
+	delay_ms(10);
+	output_low(RS232_EN);
+#endif
+
 	/* flash the number of times + 1 of our switch value */
 	current.rotary_switch_value=read_rotary_switch();
 	for ( i=0 ; i<=current.rotary_switch_value ; i++ ) {
@@ -226,15 +239,6 @@ void main(void) {
 
 
 #if 0
-#ifdef RS232_DEBUG	
-	/* turn on RS-232 port */
-	output_high(RS232_EN);
-	delay_ms(10);
-	fprintf(STREAM_TRISTAR,"\r\n\r\n# tristarTSwitch.c cold boot %s\r\n",__DATE__);
-
-	fprintf(STREAM_TRISTAR,"# boot restart_cause()=%u ",bootRestartCause);
-	print_restart_cause(bootRestartCause);
-#endif
 
 #ifdef RS232_DEBUG	
 		/* turn on RS-232 port */
